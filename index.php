@@ -1,3 +1,6 @@
+<pre>
 <?php
-phpinfo();
+//phpinfo();
+echo print_r($_SERVER);
 ?>
+</pre>
