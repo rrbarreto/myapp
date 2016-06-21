@@ -4,8 +4,8 @@
   "metadata": {
     "name": "myphp",
     "annotations": {
-      "description": "An example PHP application with no database",
-      "tags": "quickstart,php",
+      "description": "An example PHP application with a MySQL database integration",
+      "tags": "quickstart,php,mysql",
       "iconClass": "icon-php"
     }
   },
@@ -140,7 +140,7 @@
             "type": "ConfigChange"
           }
         ],
-        "replicas": 1,
+        "replicas": 2,
         "selector": {
           "name": "${NAME}"
         },
@@ -209,6 +209,132 @@
           }
         }
       }
+    },
+    {
+      "kind": "Service",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "${DATABASE_SERVICE_NAME}",
+        "annotations": {
+          "description": "Exposes the database server"
+        }
+      },
+      "spec": {
+	"ports": [
+          {
+            "name": "mysql",
+            "port": 3306,
+            "targetPort": 3306
+          }
+        ],
+        "selector": {
+          "name": "${DATABASE_SERVICE_NAME}"
+        }
+      }
+    },
+    {
+      "kind": "DeploymentConfig",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "${DATABASE_SERVICE_NAME}",
+        "annotations": {
+          "description": "Defines how to deploy the database"
+        }
+      },
+      "spec": {
+        "strategy": {
+          "type": "Recreate"
+        },
+        "triggers": [
+          {
+            "type": "ImageChange",
+            "imageChangeParams": {
+              "automatic": true,
+              "containerNames": [
+                "mysql"
+              ],
+              "from": {
+                "kind": "ImageStreamTag",
+                "namespace": "${NAMESPACE}",
+                "name": "mysql:5.6"
+              }
+            }
+          },
+          {
+            "type": "ConfigChange"
+          }
+        ],
+        "replicas": 1,
+        "selector": {
+          "name": "${DATABASE_SERVICE_NAME}"
+        },
+        "template": {
+          "metadata": {
+            "name": "${DATABASE_SERVICE_NAME}",
+            "labels": {
+              "name": "${DATABASE_SERVICE_NAME}"
+            }
+          },
+          "spec": {
+            "volumes": [
+              {
+                "name": "data",
+                "emptyDir": {}
+              }
+            ],
+            "containers": [
+              {
+                "name": "mysql",
+                "image": " ",
+                "ports": [
+                  {
+                    "containerPort": 3306
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "data",
+                    "mountPath": "/var/lib/mysql/data"
+                  }
+                ],
+                "readinessProbe": {
+                  "timeoutSeconds": 1,
+                  "initialDelaySeconds": 5,
+                  "exec": {
+                    "command": [ "/bin/sh", "-i", "-c", "MYSQL_PWD='${DATABASE_PASSWORD}' mysql -h 127.0.0.1 -u ${DATABASE_USER} -D ${DATABASE_NAME} -e 'SELECT 1'" ]
+                  }
+                },
+                "livenessProbe": {
+                    "timeoutSeconds": 1,
+                    "initialDelaySeconds": 30,
+                    "tcpSocket": {
+                        "port": 3306
+                    }
+                },
+                "env": [
+                    {
+                        "name": "MYSQL_USER",
+                        "value": "${DATABASE_USER}"
+                    },
+                    {
+                        "name": "MYSQL_PASSWORD",
+                        "value": "${DATABASE_PASSWORD}"
+                    },
+                    {
+                        "name": "MYSQL_DATABASE",
+                        "value": "${DATABASE_NAME}"
+                    }
+                ],
+                "resources": {
+                    "limits": {
+                        "memory": "${MEMORY_MYSQL_LIMIT}"
+                    }
+                }
+              }
+            ]
+          }
+        }
+      }
     }
   ],
   "parameters": [
@@ -229,6 +355,12 @@
       "name": "MEMORY_LIMIT",
       "displayName": "Memory Limit",
       "description": "Maximum amount of memory the container can use.",
+      "value": "512Mi"
+    },
+    {
+      "name": "MEMORY_MYSQL_LIMIT",
+      "displayName": "Memory Limit (MySQL)",
+      "description": "Maximum amount of memory the MySQL container can use.",
       "value": "512Mi"
     },
     {
@@ -262,24 +394,30 @@
     },
     {
       "name": "DATABASE_SERVICE_NAME",
-      "displayName": "Database Service Name"
+      "displayName": "Database Service Name",
+      "value": "mysql"
     },
     {
       "name": "DATABASE_ENGINE",
       "displayName": "Database Engine",
-      "description": "Database engine: postgresql, mysql or sqlite (default)."
+      "description": "Database engine: postgresql, mysql or sqlite (default).",
+      "value": "mysql"
     },
     {
       "name": "DATABASE_NAME",
-      "displayName": "Database Name"
+      "displayName": "Database Name",
+      "value": "myapp"
     },
     {
       "name": "DATABASE_USER",
-      "displayName": "Database User"
+      "displayName": "Database User",
+      "value": "myapp"
     },
     {
       "name": "DATABASE_PASSWORD",
-      "displayName": "Database Password"
+      "displayName": "Database Password",
+      "generate": "expression",
+      "from": "[a-zA-Z0-9]{16}"
     }
   ]
 }
