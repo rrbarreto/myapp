@@ -201,7 +201,8 @@
                 ],
 		"resources": {
 		    "limits": {
-			"memory": "${MEMORY_LIMIT}"
+			"memory": "${MEMORY_LIMIT}",
+                        "cpu": "${CPU_LIMIT}"
 		    }
 		}
               }
@@ -327,7 +328,8 @@
                 ],
                 "resources": {
                     "limits": {
-                        "memory": "${MEMORY_MYSQL_LIMIT}"
+                        "memory": "${MEMORY_MYSQL_LIMIT}",
+                        "cpu": "${CPU_MYSQL_LIMIT}"
                     }
                 }
               }
@@ -355,13 +357,25 @@
       "name": "MEMORY_LIMIT",
       "displayName": "Memory Limit",
       "description": "Maximum amount of memory the container can use.",
-      "value": "512Mi"
+      "value": "200Mi"
+    },
+    {
+      "name": "CPU_LIMIT",
+      "displayName": "CPU Limit",
+      "description": "Maximum amount of cpu the container can use.",
+      "value": "200m"
     },
     {
       "name": "MEMORY_MYSQL_LIMIT",
       "displayName": "Memory Limit (MySQL)",
       "description": "Maximum amount of memory the MySQL container can use.",
-      "value": "512Mi"
+      "value": "250Mi"
+    },
+    {
+      "name": "CPU_MYSQL_LIMIT",
+      "displayName": "CPU Limit (MySQL)",
+      "description": "Maximum amount of cpu the MySQL container can use.",
+      "value": "400m"
     },
     {
       "name": "SOURCE_REPOSITORY_URL",
